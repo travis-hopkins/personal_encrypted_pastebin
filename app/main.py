@@ -70,16 +70,15 @@ class User(db.Model, UserMixin):
         return f'<User {self.email}>'
 
 class Pastebin(db.Model):
-    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))  # Use String to store UUID
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))  # UUID as string
     content = db.Column(db.Text, nullable=True)
     filename = db.Column(db.String(255), nullable=True)
     delete_after = db.Column(db.Integer, nullable=True)  # Time in minutes
     delete_on_view = db.Column(db.Boolean, default=False, nullable=False)
-    created_at = db.Column(db.Float, default=time.time)
+    created_at = db.Column(db.String, default=datetime.utcnow().isoformat)  # ISO 8601 string format
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     user = db.relationship('User', backref='pastebins')
     encryption_key = db.Column(db.String(255), nullable=True)  # Store the encryption key
-
 
 # Initialize Login Manager
 @login_manager.user_loader
@@ -107,9 +106,14 @@ scope = oauth_scope.split(',')
 # Custom Jinja2 filter for formatting datetime
 @app.template_filter('datetimeformat')
 def datetimeformat(value, format='%Y-%m-%d %H:%M:%S'):
-    if isinstance(value, float):
-        value = datetime.fromtimestamp(value)
+    if isinstance(value, str):
+        try:
+            value = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f')  # Adjust format to match ISO 8601
+        except ValueError:
+            # Handle the case where the string does not match the expected format
+            return value
     return value.strftime(format)
+
 
 # Create database tables if they do not exist
 with app.app_context():
@@ -244,24 +248,85 @@ def logout():
 def create_paste():
     data = request.get_json()
     content = data.get('content')
+    delete_on_view = data.get('delete_on_view', False)
+    
+    try:
+        delete_after = int(data.get('delete_after', 0))
+    except ValueError:
+        app.logger.warning("Invalid delete_after value, not an integer.")
+        return jsonify({'error': 'Invalid delete after value.'}), 400
 
-    # Generate a UUID and encryption key
-    encryption_key = secrets.token_hex(16)
-    new_paste = Pastebin(content=content, user_id=current_user.id, encryption_key=encryption_key)
+    allowed_values = {0, 5, 10, 30, 60, 300, 1440, 10080}
+    
+    if delete_after not in allowed_values:
+        app.logger.warning(f"Invalid delete after value: {delete_after}")
+        return jsonify({'error': 'Invalid delete after value.'}), 400
 
-    # Save the paste to the database
-    db.session.add(new_paste)
-    db.session.commit()
+    # Generate a hexadecimal encryption key (64 characters for 32 bytes)
+    encryption_key = secrets.token_hex(32)
+    paste_id = str(uuid.uuid4())  # Generate a new UUID as a string
 
-    # Return the URL to view the paste with UUID and encryption key
-    return jsonify({'url': url_for('view_paste', paste_id=new_paste.id, key=encryption_key, _external=True)})
+    # Create the new Pastebin entry
+    new_paste = Pastebin(
+        id=paste_id,  # Store UUID as string
+        content=content,
+        user_id=current_user.id,
+        encryption_key=encryption_key,  # Store as hexadecimal string
+        delete_after=delete_after,
+        delete_on_view=delete_on_view,
+        created_at=datetime.utcnow().isoformat()  # Use ISO 8601 string format
+    )
+
+    try:
+        db.session.add(new_paste)
+        db.session.commit()
+        app.logger.info(f"Paste created successfully with ID: {paste_id}")
+    except Exception as e:
+        app.logger.error(f"Error committing new paste to the database: {e}")
+        db.session.rollback()
+        return jsonify({'error': 'Internal server error. Could not save paste.'}), 500
+
+    if delete_after > 0:
+        app.logger.info(f"Setting up timed deletion for pastebin {paste_id} after {delete_after} minutes")
+        threading.Timer(delete_after * 60, delete_paste, args=(paste_id,)).start()
+
+    paste_url = url_for('view_paste', paste_id=paste_id, key=encryption_key, _external=True)
+    app.logger.debug(f"Paste URL generated: {paste_url}")
+
+    return jsonify({'url': paste_url})
+
+
 
 @app.route('/paste/<paste_id>/<key>', methods=['GET'])
 def view_paste(paste_id, key):
-    paste = Pastebin.query.filter_by(id=paste_id, encryption_key=key).first_or_404()
+    try:
+        # Fetch the pastebin entry from the database
+        paste = Pastebin.query.filter_by(id=paste_id, encryption_key=key).first_or_404()
+        
+        if paste.delete_on_view:
+            # Immediately delete the paste after viewing
+            db.session.delete(paste)
+            db.session.commit()
+            app.logger.info(f"Paste {paste_id} deleted after viewing.")
+        
+        app.logger.debug(f"Paste fetched: {paste}")
+        # Render the paste view
+        return render_template('view-paste.html', paste=paste)
+    except Exception as e:
+        app.logger.error(f"Error fetching paste: {e}")
+        return jsonify({'error': 'Internal server error. Could not fetch paste.'}), 500
+    
+def delete_paste(paste_id):
+    try:
+        paste = Pastebin.query.get(paste_id)
+        if paste:
+            db.session.delete(paste)
+            db.session.commit()
+            app.logger.info(f"Paste {paste_id} deleted after time expiry.")
+    except Exception as e:
+        app.logger.error(f"Error during timed paste deletion: {str(e)}")
 
-    # Decrypt the content here if needed
-    return render_template('view-paste.html', paste=paste)
+
 
 
 @app.route('/my_pastebins')

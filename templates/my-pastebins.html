@@ -15,8 +15,8 @@
                 <div class="auth-buttons">
                     <button type="button" onclick="window.location.href='{{ url_for('index') }}'" class="button">Home</button>
                     <button type="button" onclick="window.location.href='{{ url_for('logout') }}'" class="button">Logout</button>
-                        <a href="{{ url_for('users') }}" class="button">Users</a>
-                        <button type="submit" id="deleteButton" class="button" onclick="return confirm('Are you sure you want to clear all your pastebins?');">Clear All My Pastebins</button>
+                    <a href="{{ url_for('users') }}" class="button">Users</a>
+                    <button type="submit" id="deleteButton" class="button" onclick="return confirm('Are you sure you want to clear all your pastebins?');">Clear All My Pastebins</button>
                 </div>
             </form>
 
@@ -27,7 +27,7 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Encryption Keys</th>
+                            <th>Preview</th>
                             <th>Created At</th>
                             <th>Actions</th>
                         </tr>
@@ -36,7 +36,7 @@
                         {% for pastebin in pastebins %}
                             <tr>
                                 <td>{{ pastebin.id }}</td>
-                                <td>{{ pastebin.content[:100] }}{% if pastebin.content|length > 100 %}...{% endif %}</td>
+                                <td>{{ pastebin.content[:50] }}{% if pastebin.content|length > 50 %}...{% endif %}</td>
                                 <td>{{ pastebin.created_at | datetimeformat }}</td>
                                 <td>
                                     <button type="button" onclick="window.open('{{ url_for('view_paste', paste_id=pastebin.id, key=pastebin.encryption_key) }}', '_blank')" class="button">View</button>

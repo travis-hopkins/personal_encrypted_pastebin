@@ -70,85 +70,85 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const pasteForm = document.getElementById('pasteForm');
-            if (!pasteForm) return;  // Exit if the form is not present
+    const pasteForm = document.getElementById('pasteForm');
+    if (!pasteForm) return;  // Exit if the form is not present
 
-            const pasteContent = document.getElementById('pasteContent');
-            const result = document.getElementById('result');
-            const newButton = document.getElementById('newButton');
-            const copyUrlButton = document.getElementById('copyUrlButton');
-            const openUrlButton = document.getElementById('openUrlButton');
-            const buttonContainer = document.getElementById('buttons');
-            let currentUrl = null;
+    const pasteContent = document.getElementById('pasteContent');
+    const result = document.getElementById('result');
+    const newButton = document.getElementById('newButton');
+    const copyUrlButton = document.getElementById('copyUrlButton');
+    const openUrlButton = document.getElementById('openUrlButton');
+    const buttonContainer = document.getElementById('buttons');
+    let currentUrl = null;
 
-            pasteForm.addEventListener('submit', function (e) {
-                e.preventDefault();
-                const content = pasteContent.value;
-                const encryptedContent = CryptoJS.AES.encrypt(content, 'your-encryption-key').toString();
-                const deleteOnView = document.getElementById('deleteOnView').checked;
-                const deleteAfter = document.getElementById('deleteAfter').value;
+    pasteForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const content = pasteContent.value;
+        const encryptedContent = CryptoJS.AES.encrypt(content, 'your-encryption-key').toString();
+        const deleteOnView = document.getElementById('deleteOnView').checked;
+        const deleteAfter = document.getElementById('deleteAfter').value;
 
-                fetch('/paste', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        content: encryptedContent, 
-                        delete_on_view: deleteOnView, 
-                        delete_after: deleteAfter 
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.url) {
-                        currentUrl = data.url;
-                        result.innerHTML = `<a href="${currentUrl}">${currentUrl}</a>`;
-                        buttonContainer.style.display = 'inline-block'; // Show buttons after paste creation
-                    } else {
-                        result.textContent = 'Failed to create paste.';
-                    }
-                })
-                .catch(err => {
-                    console.error('Error:', err);
-                    result.textContent = 'Error creating paste.';
-                });
-            });
-
-            function handleNew() {
-                pasteContent.value = '';
-                result.innerHTML = '';
-                buttonContainer.style.display = 'none'; // Hide buttons
+        fetch('/paste', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                content: encryptedContent, 
+                delete_on_view: deleteOnView, 
+                delete_after: deleteAfter 
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.url) {
+                currentUrl = data.url;
+                result.innerHTML = `<a href="${currentUrl}">${currentUrl}</a>`;
+                buttonContainer.style.display = 'inline-block'; // Show buttons after paste creation
+            } else {
+                result.textContent = 'Failed to create paste.';
             }
-
-            function handleCopyUrl() {
-                if (currentUrl) {
-                    navigator.clipboard.writeText(currentUrl).then(() => {
-                        result.textContent = 'URL copied to clipboard!';
-                    }).catch(err => {
-                        console.error('Failed to copy URL:', err);
-                        result.textContent = 'Failed to copy URL.';
-                    });
-                }
-            }
-
-            function handleOpenUrl() {
-                if (currentUrl) {
-                    window.open(currentUrl, '_blank');
-                }
-            }
-
-            // Add event listeners if elements exist
-            if (newButton) {
-                newButton.addEventListener('click', handleNew);
-            }
-            if (copyUrlButton) {
-                copyUrlButton.addEventListener('click', handleCopyUrl);
-            }
-            if (openUrlButton) {
-                openUrlButton.addEventListener('click', handleOpenUrl);
-            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            result.textContent = 'Error creating paste.';
         });
+    });
+
+    function handleNew() {
+        pasteContent.value = '';
+        result.innerHTML = '';
+        buttonContainer.style.display = 'none'; // Hide buttons
+    }
+
+    function handleCopyUrl() {
+        if (currentUrl) {
+            navigator.clipboard.writeText(currentUrl).then(() => {
+                result.textContent = 'URL copied to clipboard!';
+            }).catch(err => {
+                console.error('Failed to copy URL:', err);
+                result.textContent = 'Failed to copy URL.';
+            });
+        }
+    }
+
+    function handleOpenUrl() {
+        if (currentUrl) {
+            window.open(currentUrl, '_blank');
+        }
+    }
+
+    // Add event listeners if elements exist
+    if (newButton) {
+        newButton.addEventListener('click', handleNew);
+    }
+    if (copyUrlButton) {
+        copyUrlButton.addEventListener('click', handleCopyUrl);
+    }
+    if (openUrlButton) {
+        openUrlButton.addEventListener('click', handleOpenUrl);
+    }
+});
     </script>
 </body>
 </html>
