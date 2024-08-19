@@ -25,7 +25,7 @@ A simple Pastebin application built with Flask. 🚀 It features user authentica
 1. **Clone the repository**:
 
     ```bash
-    git clone https://github.com/yourusername/pastebin-app.git
+    git clone https://github.com/travis-hopkins/pastebin-app.git
     cd pastebin-app
     ```
 
