@@ -1,0 +1,152 @@
+body {
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    background-color: #000000;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 20px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1f202a;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #2d2c39;
+    border-radius: 4px;
+    border: 2px solid #1f202a;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #444;
+}
+
+.container {
+    width: 65%;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #1f202a;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow-x: auto; /* Allow horizontal scrolling if necessary */
+}
+
+textarea {
+    width: 100%;
+    height: 300px;
+    border: 2px dashed #65637f;
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    color: #aaa;
+    background-color: #2d2c39;
+    transition: background-color 0.3s ease;
+}
+
+.button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #7300bf;
+    color: white;
+    text-decoration: none;
+    border: none;
+    border-radius: 5px;
+    margin-right: 10px;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    display: inline-block;
+}
+
+.button:hover {
+    background-color: #8f00ef;
+    transform: scale(1.03);
+}
+
+/* Specific styles for the delete button */
+#deleteButton {
+    background-color: #f44336; /* Delete button background color */
+}
+
+/* Specific hover effect for the delete button */
+#deleteButton:hover {
+    background-color: #d32f2f; /* Darker red on hover */
+}
+
+/* Smaller buttons (if needed) */
+.small-button {
+    padding: 5px 10px;  /* Adjust padding for smaller buttons */
+    font-size: 16px;    /* Adjust font size for smaller buttons */
+    margin: 5px 5px;  /* Increased margin for more space around smaller buttons */
+}
+
+.small-button:hover {
+    transform: scale(1.05);  /* Slightly smaller scale for hover effect */
+}
+
+label {
+    display: block;
+    margin: 10px 0;
+    color: #aaa;
+    font-size: 1.1em;
+}
+
+input[type="checkbox"], input[type="number"] {
+    margin-right: 10px;
+}
+
+input[type="number"] {
+    background-color: #2d2c39;
+    border: 1px solid #65637f;
+    color: #fff;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+#result {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #2d2c39;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 1.1em;
+}
+
+/* Align label and input box on the same line */
+.inline-label {
+    display: inline-block;
+    margin-right: 5px; /* Adjust spacing between label and input as needed */
+}
+
+.inline-input {
+    display: inline-block;
+    width: auto; /* Adjust width if needed */
+    margin-right: 5px; /* Adjust spacing between input and "minutes" text */
+}
+
+/* Ensure table takes full width and has proper layout */
+table {
+    width: 100%; /* Full width of the container */
+    border-collapse: collapse; /* Merge borders for neatness */
+    table-layout: auto; /* Allow table to resize based on content */
+}
+
+/* Style table headers and cells */
+th, td {
+    padding: 8px; /* Spacing inside cells */
+    text-align: left; /* Align text to the left */
+    word-wrap: break-word; /* Wrap text within cells */
+    overflow-wrap: break-word; /* Break long words */
+    white-space: normal; /* Allow wrapping of content */
+    max-width: 300px; /* Optional: Limit cell width */
+}

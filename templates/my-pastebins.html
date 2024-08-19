@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Pastebins</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>My Pastebins</h1>
+
+        {% if current_user.is_authenticated %}
+            <form action="{{ url_for('clear_pastebins') }}" method="post" style="display: flex; flex-direction: column; align-items: flex-start;">
+                <div class="auth-buttons">
+                    <button type="button" onclick="window.location.href='{{ url_for('index') }}'" class="button">Home</button>
+                    <button type="button" onclick="window.location.href='{{ url_for('logout') }}'" class="button">Logout</button>
+                        <a href="{{ url_for('users') }}" class="button">Users</a>
+                        <button type="submit" id="deleteButton" class="button" onclick="return confirm('Are you sure you want to clear all your pastebins?');">Clear All My Pastebins</button>
+                </div>
+            </form>
+
+            <p>You have <span id="pastebinCount">{{ pastebins|length }}</span> pastebin(s).</p>
+
+            {% if pastebins %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Encryption Keys</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pastebin in pastebins %}
+                            <tr>
+                                <td>{{ pastebin.id }}</td>
+                                <td>{{ pastebin.content[:100] }}{% if pastebin.content|length > 100 %}...{% endif %}</td>
+                                <td>{{ pastebin.created_at | datetimeformat }}</td>
+                                <td>
+                                    <button type="button" onclick="window.open('{{ url_for('view_paste', paste_id=pastebin.id, key=pastebin.encryption_key) }}', '_blank')" class="button">View</button>
+                                    <form action="{{ url_for('delete_pastebin', paste_id=pastebin.id, key=pastebin.encryption_key) }}" method="post" style="display:inline;">
+                                        <button type="submit" id="deleteButton" class="button">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No pastebins found.</p>
+            {% endif %}
+        {% else %}
+            <p>You need to <a href="{{ url_for('login') }}">login</a> to view your pastebins.</p>
+            <div class="auth-buttons">
+                <a href="{{ url_for('login') }}" class="button">Login</a>
+                <a href="{{ url_for('register') }}" class="button">Register</a>
+                <a href="{{ url_for('login_google') }}" class="button">Login with Google</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            function handleDelete(event) {
+                event.preventDefault();
+                const form = event.target.closest('form');
+                const formData = new FormData(form);
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest' // Ensures the request is recognized as AJAX
+                    }
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url; // Redirect if needed
+                    } else {
+                        return response.json(); // Parse JSON response
+                    }
+                })
+                .then(data => {
+                    if (data && data.success) {
+                        // Display success message and refresh the page
+                        alert('Pastebins cleared successfully!');
+                        window.location.reload();
+                    } else if (data && data.error) {
+                        // Display error message if the deletion failed
+                        alert('Failed to delete pastebins: ' + data.error);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    alert('Error deleting pastebins.');
+                });
+            }
+
+            // Attach event listeners to all delete forms
+            document.querySelectorAll('form').forEach(form => {
+                if (form.action.includes('delete_pastebin')) {
+                    form.addEventListener('submit', handleDelete);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

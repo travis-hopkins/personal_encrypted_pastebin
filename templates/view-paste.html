@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Paste</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>View Encrypted Paste</h1>
+
+        <!-- Encrypted content (hidden) -->
+        <div id="pasteContent" style="display:none;">{{ paste.content }}</div>
+
+        <!-- Decrypted content -->
+        <textarea id="decryptedContent" placeholder="Decrypted content will appear here..."></textarea>
+
+        <!-- Buttons for navigation -->
+        <div class="button-container">
+            <button id="newPasteButton" class="button">New Paste</button>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('logout') }}" class="button">Logout</a>
+                {% if current_user.is_admin %}
+                    <a href="{{ url_for('users') }}" class="button">Users</a>
+                {% endif %}
+            {% else %}
+                <a href="{{ url_for('login') }}" class="button">Login</a>
+                <a href="{{ url_for('register') }}" class="button">Register</a>
+                <a href="{{ url_for('login_google') }}" class="button">Login with Google</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.0.0/crypto-js.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Automatically decrypt and display content
+            const encryptedContent = document.getElementById('pasteContent').innerText;
+            const decryptedContent = CryptoJS.AES.decrypt(encryptedContent, 'your-encryption-key').toString(CryptoJS.enc.Utf8);
+            document.getElementById('decryptedContent').value = decryptedContent;
+
+            // Handle New Paste button click
+            document.getElementById('newPasteButton').addEventListener('click', function () {
+                window.location.href = "{{ url_for('index') }}";
+            });
+        });
+    </script>
+</body>
+</html>

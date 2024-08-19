@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encrypted Pastebin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Create Encrypted Pastebin</h1>
+        {% if current_user.is_authenticated %}
+        <!-- Authenticated content -->
+        <p>Welcome, {{ current_user.email }}!
+        {% if current_user.is_admin %} 
+        <br> (Admin: {{ current_user.is_admin }})</p>
+        {% endif %}
+        <form id="pasteForm">
+            <textarea id="pasteContent" placeholder="Enter your paste here..."></textarea>
+            <button type="submit" class="button">Create Pastebin</button>
+        </form>
+
+        <div class="option-container" id="options">
+            <div class="option">
+                <input type="checkbox" id="deleteOnView">
+                <label for="deleteOnView" class="inline-label">Delete after first view</label>
+            </div>
+            <div class="option">
+                <label for="deleteAfter" class="inline-label">Delete after:</label>
+                <select id="deleteAfter" class="inline-input">
+                    <option value="0">None</option>
+                    <option value="5">5 minutes</option>
+                    <option value="10">10 minutes</option>
+                    <option value="30">30 minutes</option>
+                    <option value="60">1 hour</option>
+                    <option value="300">5 hours</option>
+                    <option value="1440">1 day</option>
+                    <option value="10080">1 week</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="result" class="result-container"></div>
+
+        <div class="button-container" id="buttons" style="display: none;">
+            <button id="newButton" class="button">New</button>
+            <button id="copyUrlButton" class="button">Copy URL</button>
+            <button id="openUrlButton" class="button">Open URL</button>
+        </div>
+
+        <!-- Links to other routes -->
+        <div class="button-container">
+            <a href="{{ url_for('my_pastebins') }}" class="button">My Pastebins</a>
+            <a href="{{ url_for('logout') }}" class="button">Logout</a>
+            {% if current_user.is_admin %}
+                <a href="{{ url_for('users') }}" class="button">Users</a>
+            {% endif %}
+        </div>
+        {% else %}
+        <!-- If not authenticated, show login/register links -->
+        <p>You are not logged in.</p>
+        <div class="button-container">
+            <a href="{{ url_for('login') }}" class="button">Login</a>
+            <a href="{{ url_for('register') }}" class="button">Register</a>
+            <a href="{{ url_for('login_google') }}" class="button">Login with Google</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pasteForm = document.getElementById('pasteForm');
+            if (!pasteForm) return;  // Exit if the form is not present
+
+            const pasteContent = document.getElementById('pasteContent');
+            const result = document.getElementById('result');
+            const newButton = document.getElementById('newButton');
+            const copyUrlButton = document.getElementById('copyUrlButton');
+            const openUrlButton = document.getElementById('openUrlButton');
+            const buttonContainer = document.getElementById('buttons');
+            let currentUrl = null;
+
+            pasteForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const content = pasteContent.value;
+                const encryptedContent = CryptoJS.AES.encrypt(content, 'your-encryption-key').toString();
+                const deleteOnView = document.getElementById('deleteOnView').checked;
+                const deleteAfter = document.getElementById('deleteAfter').value;
+
+                fetch('/paste', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        content: encryptedContent, 
+                        delete_on_view: deleteOnView, 
+                        delete_after: deleteAfter 
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.url) {
+                        currentUrl = data.url;
+                        result.innerHTML = `<a href="${currentUrl}">${currentUrl}</a>`;
+                        buttonContainer.style.display = 'inline-block'; // Show buttons after paste creation
+                    } else {
+                        result.textContent = 'Failed to create paste.';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    result.textContent = 'Error creating paste.';
+                });
+            });
+
+            function handleNew() {
+                pasteContent.value = '';
+                result.innerHTML = '';
+                buttonContainer.style.display = 'none'; // Hide buttons
+            }
+
+            function handleCopyUrl() {
+                if (currentUrl) {
+                    navigator.clipboard.writeText(currentUrl).then(() => {
+                        result.textContent = 'URL copied to clipboard!';
+                    }).catch(err => {
+                        console.error('Failed to copy URL:', err);
+                        result.textContent = 'Failed to copy URL.';
+                    });
+                }
+            }
+
+            function handleOpenUrl() {
+                if (currentUrl) {
+                    window.open(currentUrl, '_blank');
+                }
+            }
+
+            // Add event listeners if elements exist
+            if (newButton) {
+                newButton.addEventListener('click', handleNew);
+            }
+            if (copyUrlButton) {
+                copyUrlButton.addEventListener('click', handleCopyUrl);
+            }
+            if (openUrlButton) {
+                openUrlButton.addEventListener('click', handleOpenUrl);
+            }
+        });
+    </script>
+</body>
+</html>

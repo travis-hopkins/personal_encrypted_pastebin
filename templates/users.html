@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Users</h1>
+        {% if users %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Registration Method</th>
+                        <th>Login Method</th>
+                        <th>Admin</th>
+                        <th>Blocked</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.registration_method }}</td>
+                        <td>{{ user.login_method }}</td>
+                        <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
+                        <td>{{ 'Yes' if user.is_blocked else 'No' }}</td>
+                        <td>
+                            {% if not user.is_admin %}
+                                <form action="{{ url_for('set_admin', user_id=user.id) }}" method="post" style="display:inline;">
+                                    <button type="submit" class="button small-button">Make Admin</button>
+                                </form>
+                            {% else %}
+                                <form action="{{ url_for('remove_admin', user_id=user.id) }}" method="post" style="display:inline;">
+                                    <button type="submit" class="button small-button" style="background-color: #f44336;">Remove Admin</button>
+                                </form>
+                            {% endif %}
+                            <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post" style="display:inline;">
+                                <button type="submit" class="button small-button" style="background-color: #f44336;">Delete User</button>
+                            </form>                            
+                            {% if user.is_blocked %}
+                                <form action="{{ url_for('unblock_user', user_id=user.id) }}" method="post" style="display:inline;">
+                                    <button type="submit" class="button small-button" style="background-color: #4CAF50;">Unblock User</button>
+                                </form>
+                            {% else %}
+                                <form action="{{ url_for('block_user', user_id=user.id) }}" method="post" style="display:inline;">
+                                    <button type="submit" class="button small-button" style="background-color: #ff5722;">Block User</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No users found.</p>
+        {% endif %}
+        <div class="button-container">
+            <a href="{{ url_for('index') }}" class="button small-button">Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>
