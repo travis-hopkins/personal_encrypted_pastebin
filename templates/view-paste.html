@@ -10,6 +10,14 @@
     <div class="container">
         <h1>View Encrypted Paste</h1>
 
+        <!-- Current pastebin information -->
+        <h2>Pastebin Information</h2>
+        <div class="pastebin-info">
+            <p><strong>ID:</strong> {{ paste.id }}</p>
+            <p><strong>Name:</strong> {{ paste.name if paste.name else 'Unnamed Paste' }}</p>
+            <p><strong>Created At:</strong> {{ paste.created_at | datetimeformat }}</p>
+        </div>
+
         <!-- Encrypted content (hidden) -->
         <div id="pasteContent" style="display:none;">{{ paste.content }}</div>
 
@@ -35,9 +43,16 @@
     <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.0.0/crypto-js.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Automatically decrypt and display content
+            // Fetch encrypted content and encryption key
             const encryptedContent = document.getElementById('pasteContent').innerText;
-            const decryptedContent = CryptoJS.AES.decrypt(encryptedContent, 'your-encryption-key').toString(CryptoJS.enc.Utf8);
+
+            // Use an appropriate encryption key (replace 'your-encryption-key' with actual key)
+            const encryptionKey = 'your-encryption-key';  // Update this with your actual key
+
+            // Decrypt content
+            const decryptedContent = CryptoJS.AES.decrypt(encryptedContent, encryptionKey).toString(CryptoJS.enc.Utf8);
+
+            // Display decrypted content
             document.getElementById('decryptedContent').value = decryptedContent;
 
             // Handle New Paste button click

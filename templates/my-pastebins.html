@@ -27,7 +27,7 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Preview</th>
+                            <th>Title</th>
                             <th>Created At</th>
                             <th>Actions</th>
                         </tr>
@@ -36,7 +36,11 @@
                         {% for pastebin in pastebins %}
                             <tr>
                                 <td>{{ pastebin.id }}</td>
-                                <td>{{ pastebin.content[:50] }}{% if pastebin.content|length > 50 %}...{% endif %}</td>
+                                <td>
+                                    <a href="{{ url_for('view_paste', paste_id=pastebin.id, key=pastebin.encryption_key) }}" target="_blank">
+                                        {{ pastebin.name if pastebin.name else 'Unnamed Paste' }}
+                                    </a>
+                                </td>                                
                                 <td>{{ pastebin.created_at | datetimeformat }}</td>
                                 <td>
                                     <button type="button" onclick="window.open('{{ url_for('view_paste', paste_id=pastebin.id, key=pastebin.encryption_key) }}', '_blank')" class="button">View</button>

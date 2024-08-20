@@ -17,9 +17,11 @@
         <br> (Admin: {{ current_user.is_admin }})</p>
         {% endif %}
         <form id="pasteForm">
+            <input type="text" id="pasteName" placeholder="Enter a name for your paste..." />
             <textarea id="pasteContent" placeholder="Enter your paste here..."></textarea>
             <button type="submit" class="button">Create Pastebin</button>
         </form>
+      
 
         <div class="option-container" id="options">
             <div class="option">
@@ -49,7 +51,7 @@
             <button id="openUrlButton" class="button">Open URL</button>
         </div>
 
-        <!-- Links to other routes -->
+        
         <div class="button-container">
             <a href="{{ url_for('my_pastebins') }}" class="button">My Pastebins</a>
             <a href="{{ url_for('logout') }}" class="button">Logout</a>
@@ -74,6 +76,7 @@
     if (!pasteForm) return;  // Exit if the form is not present
 
     const pasteContent = document.getElementById('pasteContent');
+    const pasteName = document.getElementById('pasteName');  // New field
     const result = document.getElementById('result');
     const newButton = document.getElementById('newButton');
     const copyUrlButton = document.getElementById('copyUrlButton');
@@ -84,6 +87,7 @@
     pasteForm.addEventListener('submit', function (e) {
         e.preventDefault();
         const content = pasteContent.value;
+        const name = pasteName.value;  // Get the name value
         const encryptedContent = CryptoJS.AES.encrypt(content, 'your-encryption-key').toString();
         const deleteOnView = document.getElementById('deleteOnView').checked;
         const deleteAfter = document.getElementById('deleteAfter').value;
@@ -95,6 +99,7 @@
             },
             body: JSON.stringify({ 
                 content: encryptedContent, 
+                name: name,  // Include the name field
                 delete_on_view: deleteOnView, 
                 delete_after: deleteAfter 
             })
@@ -104,7 +109,7 @@
             if (data.url) {
                 currentUrl = data.url;
                 result.innerHTML = `<a href="${currentUrl}">${currentUrl}</a>`;
-                buttonContainer.style.display = 'inline-block'; // Show buttons after paste creation
+                buttonContainer.style.display = 'inline-block';
             } else {
                 result.textContent = 'Failed to create paste.';
             }
@@ -117,8 +122,9 @@
 
     function handleNew() {
         pasteContent.value = '';
+        pasteName.value = '';  // Clear the name field
         result.innerHTML = '';
-        buttonContainer.style.display = 'none'; // Hide buttons
+        buttonContainer.style.display = 'none';
     }
 
     function handleCopyUrl() {
@@ -138,7 +144,6 @@
         }
     }
 
-    // Add event listeners if elements exist
     if (newButton) {
         newButton.addEventListener('click', handleNew);
     }
