@@ -32,6 +32,7 @@
                 <label for="deleteAfter" class="inline-label">Delete after:</label>
                 <select id="deleteAfter" class="inline-input">
                     <option value="0">None</option>
+                    <option value="1">1 minute</option>
                     <option value="5">5 minutes</option>
                     <option value="10">10 minutes</option>
                     <option value="30">30 minutes</option>
@@ -71,12 +72,12 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     const pasteForm = document.getElementById('pasteForm');
-    if (!pasteForm) return;  // Exit if the form is not present
+    if (!pasteForm) return;
 
     const pasteContent = document.getElementById('pasteContent');
-    const pasteName = document.getElementById('pasteName');  // New field
+    const pasteName = document.getElementById('pasteName');
     const result = document.getElementById('result');
     const newButton = document.getElementById('newButton');
     const copyUrlButton = document.getElementById('copyUrlButton');
@@ -87,10 +88,17 @@
     pasteForm.addEventListener('submit', function (e) {
         e.preventDefault();
         const content = pasteContent.value;
-        const name = pasteName.value;  // Get the name value
+        const name = pasteName.value;
         const encryptedContent = CryptoJS.AES.encrypt(content, 'your-encryption-key').toString();
         const deleteOnView = document.getElementById('deleteOnView').checked;
-        const deleteAfter = document.getElementById('deleteAfter').value;
+        const deleteAfter = parseInt(document.getElementById('deleteAfter').value, 10); // Convert to integer
+
+        // Validate deleteAfter value
+        const allowedValues = [0, 1, 5, 10, 30, 60, 300, 1440, 10080];
+        if (!allowedValues.includes(deleteAfter)) {
+            result.textContent = 'Invalid delete after value.';
+            return;
+        }
 
         fetch('/paste', {
             method: 'POST',
@@ -99,7 +107,7 @@
             },
             body: JSON.stringify({ 
                 content: encryptedContent, 
-                name: name,  // Include the name field
+                name: name,
                 delete_on_view: deleteOnView, 
                 delete_after: deleteAfter 
             })
@@ -122,7 +130,7 @@
 
     function handleNew() {
         pasteContent.value = '';
-        pasteName.value = '';  // Clear the name field
+        pasteName.value = '';
         result.innerHTML = '';
         buttonContainer.style.display = 'none';
     }
@@ -154,6 +162,7 @@
         openUrlButton.addEventListener('click', handleOpenUrl);
     }
 });
+
     </script>
 </body>
 </html>

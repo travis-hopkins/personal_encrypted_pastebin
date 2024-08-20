@@ -5,6 +5,7 @@ import logging
 import secrets
 import threading
 from flask import Flask, render_template, request, jsonify, url_for, send_file, redirect, flash, session
+from flask import current_app as app
 from flask_mail import Mail, Message
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
@@ -259,7 +260,7 @@ def create_paste():
         app.logger.warning("Invalid delete_after value, not an integer.")
         return jsonify({'error': 'Invalid delete after value.'}), 400
 
-    allowed_values = {0, 5, 10, 30, 60, 300, 1440, 10080}
+    allowed_values = {0, 1, 5, 10, 30, 60, 300, 1440, 10080}
     
     if delete_after not in allowed_values:
         app.logger.warning(f"Invalid delete after value: {delete_after}")
@@ -297,25 +298,19 @@ def create_paste():
 
     return jsonify({'url': paste_url})
 
-
-    try:
-        db.session.add(new_paste)
-        db.session.commit()
-        app.logger.info(f"Paste created successfully with ID: {paste_id}")
-    except Exception as e:
-        app.logger.error(f"Error committing new paste to the database: {e}")
-        db.session.rollback()
-        return jsonify({'error': 'Internal server error. Could not save paste.'}), 500
-
-    if delete_after > 0:
-        app.logger.info(f"Setting up timed deletion for pastebin {paste_id} after {delete_after} minutes")
-        threading.Timer(delete_after * 60, delete_paste, args=(paste_id,)).start()
-
-    paste_url = url_for('view_paste', paste_id=paste_id, key=encryption_key, _external=True)
-    app.logger.debug(f"Paste URL generated: {paste_url}")
-
-    return jsonify({'url': paste_url})
-
+def delete_paste(paste_id):
+    with app.app_context():  # Ensure we have the application context
+        try:
+            paste = Pastebin.query.get(paste_id)
+            if paste:
+                db.session.delete(paste)
+                db.session.commit()
+                app.logger.info(f"Paste {paste_id} deleted successfully.")
+            else:
+                app.logger.warning(f"Paste {paste_id} not found for deletion.")
+        except Exception as e:
+            app.logger.error(f"Error deleting paste {paste_id}: {e}")
+            db.session.rollback()
 
 
 @app.route('/paste/<paste_id>/<key>', methods=['GET'])
@@ -331,8 +326,6 @@ def view_paste(paste_id, key):
     except Exception as e:
         app.logger.error(f"Error fetching paste: {e}")
         return jsonify({'error': 'Internal server error. Could not fetch paste.'}), 500
-
-
 
 @app.route('/my_pastebins')
 @login_required
